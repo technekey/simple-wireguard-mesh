@@ -20,12 +20,14 @@ Plans include support for dynamically adding and removing nodes from the WireGua
 
 ### Usage
 - Configure Your Inventory File: Update your Ansible inventory file with the details of your Ubuntu 22.04 virtual machines.
+- You can update the configuration parms inside groupvars directory if needed. This is optional. ( you will find a lot of explanatory comments)
 
 - Run the Playbook: Execute the Ansible playbook to create the WireGuard mesh network.
 
 ```
 ansible-playbook -i inventory.yml main.yml
 ```
+In case you want to overwrite the existing wireguard config, you will have to use `-e overwrite=yes` extra vars. 
 Sit Back and Relax: The playbook will automate the WireGuard mesh setup. No further actions are needed.
 
 ### Important Notes
