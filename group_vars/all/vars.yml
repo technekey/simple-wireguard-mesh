@@ -36,7 +36,7 @@ wire_guard_keep_alive_sec: 30
 # closed: the allowedIPs will be set to PEER IPS
 # open:   the allowedIPs will be set to 0.0.0.0
 #################################################
-mesh_type: closed
+mesh_type: open
 
 ################################################
 #If you want to use preshared key for enhanced
