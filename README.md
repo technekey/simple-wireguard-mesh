@@ -30,6 +30,99 @@ ansible-playbook -i inventory.yml main.yml
 In case you want to overwrite the existing wireguard config, you will have to use `-e overwrite=yes` extra vars. 
 Sit Back and Relax: The playbook will automate the WireGuard mesh setup. No further actions are needed.
 
+
+### Example:
+With the following Virtual machine as target, a mesh will be created.
+```
+192.168.122.116 wg1
+192.168.122.99 wg2
+192.168.122.238 wg3
+```
+
+Here are the config files generated on the three machines:
+
+```
+wg1
+
+#vm1(Self)
+[Interface]
+PrivateKey = sKDaZuQGOQHvkLZ/1WEypshoX78rySJtWvQwLxn7Q14=
+Address = 10.0.0.2
+ListenPort = 51819
+
+PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -t nat -A POSTROUTING -o enp1s0 -j MASQUERADE
+PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROUTING -o enp1s0 -j MASQUERADE
+
+#vm2
+[Peer]
+PublicKey = WbZwBrC3FEo4F+saB6k6w3fbJB7MD7bk+8wsuNFd9zI=
+Endpoint = 192.168.122.99:51819
+AllowedIPs = 10.0.0.3/32
+PresharedKey = XUhu0hl1FwXr5WorcMIf2hYzPm+fWtsFRgrBVCVzBG4=
+PersistentKeepalive = 30
+#vm3
+[Peer]
+PublicKey = Tr1ivpcVtoAuPhYlG+p6Qqo/s9mNlLYYmIlqAol4yQI=
+Endpoint = 192.168.122.238:51819
+AllowedIPs = 10.0.0.4/32
+PresharedKey = XUhu0hl1FwXr5WorcMIf2hYzPm+fWtsFRgrBVCVzBG4=
+PersistentKeepalive = 30
+
+
+
+
+
+wg2
+
+#vm2(Self)
+[Interface]
+PrivateKey = +ERl8D/3gc24iG6BUgqG1GwgJMQbf37LQpoEUhPkZGM=
+Address = 10.0.0.3
+ListenPort = 51819
+
+#vm1
+[Peer]
+PublicKey = T+2g5kScp3YqLj/9/RR/zsNnFT2/aqRtidYYbM8I40Q=
+Endpoint = 192.168.122.116:51819
+AllowedIPs = 10.0.0.2/32
+PresharedKey = XUhu0hl1FwXr5WorcMIf2hYzPm+fWtsFRgrBVCVzBG4=
+PersistentKeepalive = 30
+#vm3
+[Peer]
+PublicKey = Tr1ivpcVtoAuPhYlG+p6Qqo/s9mNlLYYmIlqAol4yQI=
+Endpoint = 192.168.122.238:51819
+AllowedIPs = 10.0.0.4/32
+PresharedKey = XUhu0hl1FwXr5WorcMIf2hYzPm+fWtsFRgrBVCVzBG4=
+PersistentKeepalive = 30
+
+
+
+
+wg3
+
+#vm3(Self)
+[Interface]
+PrivateKey = GHMhzwX/tAqfUgND32+Zxv5S8dV8k9oIkA9GMVqFFlU=
+Address = 10.0.0.4
+ListenPort = 51819
+
+#vm1
+[Peer]
+PublicKey = T+2g5kScp3YqLj/9/RR/zsNnFT2/aqRtidYYbM8I40Q=
+Endpoint = 192.168.122.116:51819
+AllowedIPs = 10.0.0.2/32
+PresharedKey = XUhu0hl1FwXr5WorcMIf2hYzPm+fWtsFRgrBVCVzBG4=
+PersistentKeepalive = 30
+#vm2
+[Peer]
+PublicKey = WbZwBrC3FEo4F+saB6k6w3fbJB7MD7bk+8wsuNFd9zI=
+Endpoint = 192.168.122.99:51819
+AllowedIPs = 10.0.0.3/32
+PresharedKey = XUhu0hl1FwXr5WorcMIf2hYzPm+fWtsFRgrBVCVzBG4=
+PersistentKeepalive = 30
+
+```
+
 ### Important Notes
 #### Distribution Compatibility:
 While the playbook is tailored for Ubuntu 22.04, it may work on other distributions. However, it's recommended to test in your specific environment.
