@@ -1,0 +1,25 @@
+- name: Create WireGuard mesh network of multiple Linux nodes
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: "Install wireguard and setup its directory"
+      ansible.builtin.import_role:
+        name: wireguard-setup
+
+    - name: "Generate the keys"
+      ansible.builtin.import_role:
+        name: wireguard-keys-setup 
+
+    - name: "Start Templating the WireGuard Config files"
+      ansible.builtin.import_role:      
+        name: wireguard-config-template
+
+    - name: "Start the WireGuard on the target machines"
+      ansible.builtin.import_role:
+       name: wireguard-start
+
+    - name: "Setup UFW Firewall"
+      ansible.builtin.import_role:
+        name: wireguard-firewall-setup
+      when: enable_firewall

@@ -1,0 +1,68 @@
+#################################################
+#Name of the interface, you can give any name
+#################################################
+wg_interface: wg0
+
+#################################################
+# Wireguard directory..do not change unless you
+# are aware of your actions.
+#################################################
+wireguard_dir: /etc/wireguard
+
+#################################################
+# peer communicates with the others over a 
+# specific port.
+#################################################
+wireguard_port: 51819
+
+#################################################
+# CIDR of internal network
+#################################################
+wire_guard_network_address: '10.0.0.1'
+
+#################################################
+# This is to overwrite the existing wireguard
+# config
+#################################################
+overwrite: "no"
+
+#################################################
+#If you are on NAT, you need this
+#################################################
+wire_guard_keep_alive_sec: 30
+
+#################################################
+# If this is set:
+# closed: the allowedIPs will be set to PEER IPS
+# open:   the allowedIPs will be set to 0.0.0.0
+#################################################
+mesh_type: closed
+
+################################################
+#If you want to use preshared key for enhanced
+#security. 
+################################################
+preshred_key_enabled: true
+
+################################################
+# The post up and down commands, if you need NAT
+################################################
+post_up_cmd: "iptables -A FORWARD -i %i -j ACCEPT; iptables -t nat -A POSTROUTING -o {{ ansible_default_ipv4.interface }} -j MASQUERADE"
+post_down_cmd: "iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROUTING -o {{ ansible_default_ipv4.interface }} -j MASQUERADE"
+
+#################################################
+# no_log to show sensitive info
+#################################################
+sensitive_logging_hide:  false
+
+###############################################
+# This will add UFW rule to allow traffic on 
+# wg_interface(aka wg0)
+# CAUTION: Set this to true with appropriate
+# whitelisted_ip. Otherwise, SSH will not work.
+###############################################
+enable_firewall: false
+whitelisted_ips:
+  - "192.168.1.174"
+  - "192.168.1.0/24"
+  - "192.168.122.1"

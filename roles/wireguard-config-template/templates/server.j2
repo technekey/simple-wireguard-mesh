@@ -1,0 +1,34 @@
+{% set last_octet = host_ip.split('.')[-1] %}
+
+#{{ inventory_hostname }}(Self)
+[Interface]
+PrivateKey = {{ private_key }}
+Address = {{ wire_guard_network_address |ansible.utils.ipmath((groups['all'].index(inventory_hostname) +1 )) |string}}
+ListenPort = {{ wireguard_port }}
+
+{% if (groups['all'].index(inventory_hostname) +1 ) == 1 %}
+{%if post_up_cmd is defined %}
+PostUp = {{ post_up_cmd }}
+{%endif%}
+{%if post_down_cmd is defined %}
+PostDown = {{ post_down_cmd }}
+{%endif%}
+
+{%endif%}
+{% for host in groups['all'] %}
+{% if host_ip != hostvars[host].ansible_host %}
+#{{ hostvars[host].inventory_hostname }}
+[Peer]
+PublicKey = {{ hostvars[host].public_key }}
+Endpoint = {{ hostvars[host].ansible_host }}:{{ wireguard_port }}
+{% if mesh_type | regex_search('open') %}
+AllowedIPs = "0.0.0.0/0, ::/0"
+{%else%}
+AllowedIPs = {{ wire_guard_network_address.split('.')[0:3] | join('.') }}.{{ (wire_guard_network_address.split('.')[-1]|int + loop.index) }}/32
+{%endif%}
+{% if preshred_key_enabled %}
+PresharedKey = {{ hostvars[groups['server'][0]]['preshared_key'] }}
+{%endif%}
+PersistentKeepalive = {{ wire_guard_keep_alive_sec }}
+{% endif %}
+{% endfor %}

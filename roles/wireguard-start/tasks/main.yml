@@ -1,0 +1,20 @@
+---
+# tasks file for wireguard-start
+  - name: Enable WireGuard service
+    systemd:
+      name: wg-quick@{{ wg_interface }}.service
+      enabled: yes
+
+  - name: Start WireGuard service
+    systemd:
+      name: wg-quick@{{ wg_interface }}.service
+      state: restarted
+
+  - name: Check WireGuard service status
+    shell: wg show
+    register: mesh_status
+
+  - name: "Display mesh status"
+    debug:
+      msg: "{{ mesh_status.stdout_lines }}"
+

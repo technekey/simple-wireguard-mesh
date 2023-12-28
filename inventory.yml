@@ -1,0 +1,21 @@
+all:
+  children:
+    server:
+      hosts:
+        vm1:
+          ansible_host: 192.168.122.116
+          ansible_user: technekey
+          ansible_ssh_private_key_file: /home/technekey/.ssh/id_ed25519
+    client:
+      hosts:
+        vm2:
+          ansible_host: 192.168.122.99
+          ansible_user: technekey
+          ansible_ssh_private_key_file: /home/technekey/.ssh/id_ed25519
+        vm3:
+          ansible_host: 192.168.122.238
+          ansible_user: technekey
+          ansible_ssh_private_key_file: /home/technekey/.ssh/id_ed25519
+  vars:
+    ansible_python_interpreter: /usr/bin/python3             # Adjust this if your VMs use a different Python interpreter
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'   # you can comment this

@@ -1,0 +1,72 @@
+---
+# tasks file for wireguard-keys-setup
+  - name: Generate Public and Private keys
+    ansible.builtin.shell:
+      cmd: "wg genkey | tee {{ wireguard_dir }}/privatekey | wg pubkey > {{ wireguard_dir }}/publickey"
+    register: key_generation_result
+    become: true
+    no_log: "{{ sensitive_logging_hide }}"
+
+  - name: "Generate the PreSharedKeys"
+    ansible.builtin.shell:
+      cmd: "wg genpsk > {{ wireguard_dir }}/preshared"
+    register: preshared_key_result
+    when: preshred_key_enabled
+    no_log: "{{ sensitive_logging_hide }}"
+
+  - name: "Ensure proper permissions and owner for key files"
+    ansible.builtin.file:
+      path: "{{ wireguard_dir }}/{{ item.filename }}"
+      mode: "{{ item.mode | default('0600') }}"
+      owner: "{{ item.owner | default('root') }}"
+      group: "{{ item.group | default('root') }}"
+    loop:
+      - { filename: 'privatekey', mode: '0600', owner: 'root', group: 'root' }
+      - { filename: 'publickey',  mode: '0644', owner: 'root', group: 'root' }
+    when: key_generation_result.changed | default(false)
+    no_log: "{{ sensitive_logging_hide }}"
+
+  - name: "Ensure proper permissions and owner for preshared key file"
+    ansible.builtin.file:
+      path: "{{ wireguard_dir }}/{{ item.filename }}"
+      mode: "{{ item.mode | default('0600') }}"
+      owner: "{{ item.owner | default('root') }}"
+      group: "{{ item.group | default('root') }}"
+    loop:
+      - { filename: 'preshared', mode: '0600', owner: 'root', group: 'root' }
+    when: preshred_key_enabled
+    no_log: "{{ sensitive_logging_hide }}"
+
+  - name: "Read private key"
+    slurp:
+      src: "{{ wireguard_dir }}/privatekey"
+    register: private_key_result
+    no_log:  "{{ sensitive_logging_hide }}"
+
+  - name: "Read public key"
+    slurp:
+      src: "{{ wireguard_dir }}/publickey"
+    register: public_key_result
+    no_log: "{{ sensitive_logging_hide }}"
+
+  - name: "Read preshared key"
+    slurp:
+      src: "{{ wireguard_dir }}/preshared"
+    register: preshared_key_result
+    no_log: "{{ sensitive_logging_hide }}"
+    when: preshred_key_enabled
+
+  - name: Set private key, public key, and IP
+    ansible.builtin.set_fact:
+      host_ip: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+      private_key: "{{ private_key_result['content'] | b64decode  |trim}}"
+      public_key: "{{ public_key_result['content'] | b64decode |trim}}"
+      wireguard_server_host: "{{ hostvars[groups['server'][0]].ansible_host }}"
+      role: "{{ 'server' if 'server' in group_names else 'client' }}"
+    no_log: "{{ sensitive_logging_hide }}"
+
+  - name: "Set Prehshared key"
+    ansible.builtin.set_fact:
+      preshared_key: "{{ preshared_key_result['content'] | b64decode |trim}}"
+    no_log: "{{ sensitive_logging_hide }}"
+    when: preshred_key_enabled

@@ -1,0 +1,23 @@
+---
+# tasks file for wireguard-firewall-setup
+#
+
+  - name: "Disable UFW"
+    ufw:
+      state: disabled
+
+  - name: "Allow all incoming traffic on WireGuard interface (wg0)"
+    ufw:
+      rule: allow
+      interface_in: "{{ wg_interface }}"
+
+  - name: "Allow all from whilelisted hosts"
+    community.general.ufw:
+      rule: allow
+      src: '{{ item }}'
+    loop: "{{ whitelisted_ips }}"
+
+  - name: "Deny everything and enable UFW"
+    community.general.ufw:
+      state: enabled
+      policy: deny

@@ -1,0 +1,80 @@
+---
+# tasks file for wireguard-setup
+  - name: "Validate input parameters"
+    assert:
+      that: "overwrite | regex_search('(?i)^yes$|^no$')"
+      fail_msg: "The valid value for the overwrite variable is either 'yes' or 'no'"
+      success_msg: "Validation completed"
+    run_once: true
+
+  - name: "Validate the CIDR"
+    assert:
+      that: wire_guard_network_address|ansible.utils.ipaddr and wire_guard_network_address.split('.')|length == 4
+      fail_msg: "Invalid CIDR provided in the 'wire_guard_network_address' variable"
+      success_msg: "CIDR supplied in wire_guard_network_address is validated."
+    run_once: true
+
+  - name: "Install the dependencies on the host"
+    package:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - wireguard
+      - qrencode
+      - "{{ 'ufw' if enable_firewall is defined else omit }}"
+
+  - name: "Install python packages"
+    ansible.builtin.pip:
+      name: "{{ item }}"
+    loop:
+      - netaddr 
+
+  - name: "Add wireguard module"
+    community.general.modprobe:
+      name: wireguard
+      state: present
+      persistent: present
+
+  # Set ip forwarding on in /proc and in the sysctl file and reload if necessary
+  - name: "Update the net.ipv4.ip_forward kernel parameters"
+    ansible.posix.sysctl:
+      name: net.ipv4.ip_forward
+      value: '1'
+      sysctl_set: true
+      state: present
+      reload: true
+
+  - name: Ensure {{ wireguard_dir }} directory exists
+    ansible.builtin.file:
+      path: "{{ wireguard_dir }}"
+      state: directory
+    when: overwrite |regex_search('(?i)^YES$')
+
+  - name: "Check the status of wg-quick service"
+    ansible.builtin.systemd:
+      name: wg-quick@{{ wg_interface }}
+    register: wg_quick_status
+   
+  - name: "Ensure the status of exisiting wireguard status"
+    assert:
+      that: wg_quick_status.status.ActiveState == "inactive"
+      fail_msg: "Wireguard service is already {{ wg_quick_status.status.ActiveState }}.Running this playbook will overwrite the configurations.Use '-e overwrite=yes' to override"
+      success_msg: "No wireguard service running"
+    when: overwrite |regex_search('(?i)^NO$')
+
+  - name: "Stop the service"
+    systemd:
+      name: wg-quick@{{ wg_interface }}
+    when: overwrite |regex_search('(?i)^YES$')
+
+  - name: "Remove the service"
+    file:
+      path: "/etc/systemd/system/wg-quick@{{ wg_interface }}"
+      state: absent
+    when: overwrite |regex_search('(?i)^YES$')
+
+  - name: "Reload systemd"
+    systemd:
+      daemon_reload: yes
+    when: overwrite |regex_search('(?i)^YES$')
+
