@@ -5,7 +5,9 @@
 PrivateKey = {{ private_key }}
 Address = {{ wire_guard_network_address |ansible.utils.ipmath((groups['all'].index(inventory_hostname) +1 )) |string}}
 ListenPort = {{ wireguard_port }}
-
+{%if mtu is defined %}
+MTU = {{ mtu }}
+{%endif%}
 {% if (groups['all'].index(inventory_hostname) +1 ) == 1 %}
 {%if post_up_cmd is defined %}
 PostUp = {{ post_up_cmd }}
@@ -22,7 +24,11 @@ PostDown = {{ post_down_cmd }}
 PublicKey = {{ hostvars[host].public_key }}
 Endpoint = {{ hostvars[host].ansible_host }}:{{ wireguard_port }}
 {% if mesh_type | regex_search('open') %}
-AllowedIPs = "0.0.0.0/0, ::/0"
+{% if ipv6_enabled %}
+AllowedIPs = 0.0.0.0/0, ::/0
+{%else%}
+AllowedIPs = 0.0.0.0/0
+{%endif%}
 {%else%}
 AllowedIPs = {{ wire_guard_network_address.split('.')[0:3] | join('.') }}.{{ (wire_guard_network_address.split('.')[-1]|int + loop.index) }}/32
 {%endif%}

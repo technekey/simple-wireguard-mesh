@@ -35,9 +35,15 @@ wire_guard_keep_alive_sec: 30
 # If this is set:
 # closed: the allowedIPs will be set to PEER IPS
 # open:   the allowedIPs will be set to 0.0.0.0
+# Some VPS do not like IPV6 interface. 
 #################################################
-mesh_type: open
+mesh_type: closed
+ipv6_enabled: false
 
+################################################
+#MTU: Set the MTU for WG interface
+################################################
+mtu: 1400
 ################################################
 #If you want to use preshared key for enhanced
 #security. 
@@ -63,6 +69,4 @@ sensitive_logging_hide:  false
 ###############################################
 enable_firewall: false
 whitelisted_ips:
-  - "192.168.1.174"
   - "192.168.1.0/24"
-  - "192.168.122.1"

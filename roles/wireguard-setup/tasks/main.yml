@@ -21,6 +21,7 @@
     loop:
       - wireguard
       - qrencode
+      - python3-pip
       - "{{ 'ufw' if enable_firewall is defined else omit }}"
 
   - name: "Install python packages"
@@ -34,6 +35,7 @@
       name: wireguard
       state: present
       persistent: present
+    ignore_errors: true #non kvm VMS
 
   # Set ip forwarding on in /proc and in the sysctl file and reload if necessary
   - name: "Update the net.ipv4.ip_forward kernel parameters"
@@ -43,6 +45,7 @@
       sysctl_set: true
       state: present
       reload: true
+    ignore_errors: true #non kvm VMS
 
   - name: Ensure {{ wireguard_dir }} directory exists
     ansible.builtin.file:
